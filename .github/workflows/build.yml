@@ -9,19 +9,23 @@ on:
 
 jobs:
   build:
-    runs-on: macos-15
+    strategy:
+      fail-fast: false
+      matrix:
+        macos-version: [macos-13, macos-14, macos-15, macos-26]
+
+    runs-on: ${{ matrix.macos-version }}
+
+    env:
+      DERIVED_DATA_PATH: build/DerivedData
+      APP_PATH: build/DerivedData/Build/Products/Release/Rylai.app
+      DMG_PATH: artifacts/Rylai.dmg
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Show Xcode version
-      run: xcodebuild -version
-
-    - name: Select Xcode 16.2
-      run: sudo xcode-select -s /Applications/Xcode_16.2.app
-
-    - name: Show selected Xcode version
       run: xcodebuild -version
 
     - name: Install XcodeGen
@@ -40,6 +44,7 @@ jobs:
         xcodebuild -project Rylai.xcodeproj \
                    -scheme Rylai \
                    -configuration Release \
+                   -derivedDataPath "$DERIVED_DATA_PATH" \
                    -destination 'platform=macOS' \
                    CODE_SIGN_IDENTITY="" \
                    CODE_SIGNING_REQUIRED=NO \
@@ -50,7 +55,16 @@ jobs:
     - name: Create app bundle
       run: |
         mkdir -p artifacts
-        find build -name "Rylai.app" -type d -exec cp -R {} artifacts/ \;
+        cp -R "$APP_PATH" "artifacts/Rylai.app"
+
+    - name: Create DMG
+      run: |
+        hdiutil create \
+          -volname "Rylai" \
+          -srcfolder "artifacts/Rylai.app" \
+          -ov \
+          -format UDZO \
+          "$DMG_PATH"
 
     - name: Verify app bundle
       run: |
@@ -62,10 +76,20 @@ jobs:
           exit 1
         fi
 
+        if [ -f "$DMG_PATH" ]; then
+          echo "DMG created successfully"
+          ls -lh "$DMG_PATH"
+        else
+          echo "ERROR: DMG not found"
+          exit 1
+        fi
+
     - name: Upload build artifacts
       if: success()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v6
       with:
-        name: Rylai-macOS
-        path: artifacts/Rylai.app
+        name: Rylai-${{ matrix.macos-version }}
+        path: |
+          artifacts/Rylai.app
+          artifacts/Rylai.dmg
         retention-days: 30
