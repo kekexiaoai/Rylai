@@ -13,7 +13,8 @@ This repository is maintained as a fork of the original project by [JaffryGao](h
 
 ### Changes In This Fork
 
-- Lowered the minimum supported version from macOS 15+ to macOS 12.0+
+- Extended support from the upstream's macOS 14+ baseline to macOS 12.0+
+- Preserved the upstream behavior where macOS 14-15 use standard frosted glass instead of the newer visual style
 - Added backward-compatible launch-at-login support with a bundled login item helper for macOS 12
 - Adjusted popover and settings UI behavior for better compatibility on older macOS versions
 - Updated GitHub Actions to build universal macOS artifacts and package release DMG files

@@ -13,7 +13,8 @@
 
 ### 本 Fork 的主要修改
 
-- 将最低支持版本从 macOS 15+ 下放到 macOS 12.0+
+- 在上游 macOS 14+ 基线的基础上，进一步扩展到 macOS 12.0+
+- 保留上游在 macOS 14-15 上退化为标准 frosted glass 的行为差异
 - 为 macOS 12 增加兼容的开机启动方案，并内置 login item helper
 - 调整菜单弹窗与设置页样式，使其在旧版 macOS 上显示更稳定
 - 更新 GitHub Actions，产出 universal macOS 制品并自动打包 DMG
