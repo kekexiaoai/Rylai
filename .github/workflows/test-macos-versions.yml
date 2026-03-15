@@ -1,0 +1,59 @@
+name: Test macOS Compatibility
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        macos-version: [macos-15]
+      fail-fast: false
+
+    runs-on: ${{ matrix.macos-version }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Show Xcode version
+      run: xcodebuild -version
+
+    - name: Select Xcode 16.2
+      run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+    - name: Show selected Xcode version
+      run: xcodebuild -version
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode project
+      run: |
+        xcodegen generate --spec project.yml
+        ls -la
+
+    - name: List available schemes
+      run: xcodebuild -list -project Rylai.xcodeproj
+
+    - name: Build Rylai (macOS ${{ matrix.macos-version }})
+      run: |
+        xcodebuild -project Rylai.xcodeproj \
+                   -scheme Rylai \
+                   -configuration Release \
+                   -destination 'platform=macOS' \
+                   CODE_SIGN_IDENTITY="" \
+                   CODE_SIGNING_REQUIRED=NO \
+                   CODE_SIGNING_ALLOWED=NO \
+                   MACOSX_DEPLOYMENT_TARGET=12.0 \
+                   -quiet
+
+    - name: Check build output
+      if: always()
+      run: |
+        echo "Build directory contents:"
+        find build -type f -name "*.app" 2>/dev/null || echo "No .app found"

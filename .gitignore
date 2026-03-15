@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+*.swp
+*~
+
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/contents.xcworkspacedata
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xccheckout
+*.moved-aside
+
+# XcodeGen (regeneratable)
+*.xcodeproj/
+
+# Release artifacts
+*.zip
+
+# Misc
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM

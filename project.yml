@@ -1,0 +1,74 @@
+name: Rylai
+
+options:
+  bundleIdPrefix: com.rylai
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "12.0"
+  generateEmptyDirectories: true
+  indentWidth: 4
+  tabWidth: 4
+  minimumXcodeGenVersion: 2.35.0
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "12.0"
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+
+configs:
+  Debug: debug
+  Release: release
+
+targets:
+  Rylai:
+    type: application
+    platform: macOS
+    deploymentTarget: "12.0"
+
+    dependencies:
+      - target: RylaiLoginItem
+
+    sources:
+      - path: Rylai
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/Rylai.entitlements"
+
+    postBuildScripts:
+      - name: Embed Login Item
+        script: |
+          mkdir -p "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LoginItems"
+          ditto "$BUILT_PRODUCTS_DIR/RylaiLoginItem.app" "$TARGET_BUILD_DIR/$CONTENTS_FOLDER_PATH/Library/LoginItems/RylaiLoginItem.app"
+        inputFiles:
+          - $(BUILT_PRODUCTS_DIR)/RylaiLoginItem.app
+        outputFiles:
+          - $(TARGET_BUILD_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LoginItems/RylaiLoginItem.app
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rylai.app
+        PRODUCT_NAME: Rylai
+        INFOPLIST_FILE: Rylai/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Rylai/Resources/Rylai.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  RylaiLoginItem:
+    type: application
+    platform: macOS
+    deploymentTarget: "12.0"
+
+    sources:
+      - path: RylaiLoginItem
+        excludes:
+          - "Resources/Info.plist"
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rylai.app.LoginItem
+        PRODUCT_NAME: RylaiLoginItem
+        INFOPLIST_FILE: RylaiLoginItem/Resources/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: NO

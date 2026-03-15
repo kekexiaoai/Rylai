@@ -1,0 +1,71 @@
+name: Build Rylai
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Show Xcode version
+      run: xcodebuild -version
+
+    - name: Select Xcode 16.2
+      run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+    - name: Show selected Xcode version
+      run: xcodebuild -version
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode project
+      run: |
+        xcodegen generate --spec project.yml
+        ls -la
+
+    - name: List available schemes
+      run: xcodebuild -list -project Rylai.xcodeproj
+
+    - name: Build Rylai
+      run: |
+        xcodebuild -project Rylai.xcodeproj \
+                   -scheme Rylai \
+                   -configuration Release \
+                   -destination 'platform=macOS' \
+                   CODE_SIGN_IDENTITY="" \
+                   CODE_SIGNING_REQUIRED=NO \
+                   CODE_SIGNING_ALLOWED=NO \
+                   MACOSX_DEPLOYMENT_TARGET=12.0 \
+                   -quiet
+
+    - name: Create app bundle
+      run: |
+        mkdir -p artifacts
+        find build -name "Rylai.app" -type d -exec cp -R {} artifacts/ \;
+
+    - name: Verify app bundle
+      run: |
+        if [ -d "artifacts/Rylai.app" ]; then
+          echo "App bundle created successfully"
+          ls -la artifacts/Rylai.app/
+        else
+          echo "ERROR: App bundle not found"
+          exit 1
+        fi
+
+    - name: Upload build artifacts
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: Rylai-macOS
+        path: artifacts/Rylai.app
+        retention-days: 30
