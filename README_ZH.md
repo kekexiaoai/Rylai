@@ -4,6 +4,21 @@
 
 > 基于 Unsplash 的 macOS 自动换壁纸应用，采用 Liquid Glass 设计语言。
 
+## Fork 说明
+
+本仓库基于原作者 [JaffryGao](https://github.com/JaffryGao) 的项目进行 fork 并持续维护。
+
+- 原始项目：https://github.com/JaffryGao/Rylai
+- 当前 fork：https://github.com/kekexiaoai/Rylai
+
+### 本 Fork 的主要修改
+
+- 将最低支持版本从 macOS 15+ 下放到 macOS 12.0+
+- 为 macOS 12 增加兼容的开机启动方案，并内置 login item helper
+- 调整菜单弹窗与设置页样式，使其在旧版 macOS 上显示更稳定
+- 更新 GitHub Actions，产出 universal macOS 制品并自动打包 DMG
+- 保留上游署名，同时补充当前 fork 的仓库与发布信息
+
 ## 功能特性
 
 - 🖼️ 自动获取 Unsplash 4K 横屏壁纸

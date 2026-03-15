@@ -4,6 +4,21 @@
 
 > A macOS wallpaper app powered by Unsplash, built with Liquid Glass design.
 
+## Fork Notice
+
+This repository is maintained as a fork of the original project by [JaffryGao](https://github.com/JaffryGao).
+
+- Original project: https://github.com/JaffryGao/Rylai
+- Current fork: https://github.com/kekexiaoai/Rylai
+
+### Changes In This Fork
+
+- Lowered the minimum supported version from macOS 15+ to macOS 12.0+
+- Added backward-compatible launch-at-login support with a bundled login item helper for macOS 12
+- Adjusted popover and settings UI behavior for better compatibility on older macOS versions
+- Updated GitHub Actions to build universal macOS artifacts and package release DMG files
+- Kept attribution to the original upstream project while maintaining fork-specific release metadata
+
 ## Features
 
 - 🖼️ Auto-fetch 4K landscape wallpapers from Unsplash

@@ -1,0 +1,118 @@
+name: Release Rylai
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+
+    env:
+      DERIVED_DATA_PATH: build/DerivedData
+      APP_PATH: build/DerivedData/Build/Products/Release/Rylai.app
+      APP_BINARY_PATH: build/DerivedData/Build/Products/Release/Rylai.app/Contents/MacOS/Rylai
+      LOGIN_ITEM_BINARY_PATH: build/DerivedData/Build/Products/Release/Rylai.app/Contents/Library/LoginItems/RylaiLoginItem.app/Contents/MacOS/RylaiLoginItem
+      DMG_PATH: artifacts/Rylai.dmg
+      ZIP_PATH: artifacts/Rylai.zip
+      CHECKSUM_PATH: artifacts/SHA256SUMS.txt
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+
+    - name: Show Xcode version
+      run: xcodebuild -version
+
+    - name: Select Xcode 16.2 if available
+      run: |
+        if [ -d "/Applications/Xcode_16.2.app" ]; then
+          sudo xcode-select -s /Applications/Xcode_16.2.app
+        else
+          echo "Xcode 16.2 not found, using default Xcode"
+        fi
+
+    - name: Show selected Xcode version
+      run: xcodebuild -version
+
+    - name: Install XcodeGen
+      run: brew install xcodegen
+
+    - name: Generate Xcode project
+      run: xcodegen generate --spec project.yml
+
+    - name: Build universal release
+      run: |
+        xcodebuild -project Rylai.xcodeproj \
+                   -scheme Rylai \
+                   -configuration Release \
+                   -derivedDataPath "$DERIVED_DATA_PATH" \
+                   -destination 'generic/platform=macOS' \
+                   ONLY_ACTIVE_ARCH=NO \
+                   ARCHS="x86_64 arm64" \
+                   CODE_SIGN_IDENTITY="" \
+                   CODE_SIGNING_REQUIRED=NO \
+                   CODE_SIGNING_ALLOWED=NO \
+                   MACOSX_DEPLOYMENT_TARGET=12.0 \
+                   -quiet
+
+    - name: Package release assets
+      run: |
+        mkdir -p artifacts
+        cp -R "$APP_PATH" "artifacts/Rylai.app"
+
+        hdiutil create \
+          -volname "Rylai" \
+          -srcfolder "artifacts/Rylai.app" \
+          -ov \
+          -format UDZO \
+          "$DMG_PATH"
+
+        ditto -c -k --sequesterRsrc --keepParent "artifacts/Rylai.app" "$ZIP_PATH"
+
+        shasum -a 256 "$DMG_PATH" "$ZIP_PATH" > "$CHECKSUM_PATH"
+
+    - name: Verify packaged app
+      run: |
+        test -d "$APP_PATH"
+        lipo -info "$APP_BINARY_PATH"
+        lipo "$APP_BINARY_PATH" -verify_arch x86_64 arm64
+        lipo -info "$LOGIN_ITEM_BINARY_PATH"
+        lipo "$LOGIN_ITEM_BINARY_PATH" -verify_arch x86_64 arm64
+        ls -lh artifacts
+
+    - name: Upload workflow artifacts
+      uses: actions/upload-artifact@v6
+      with:
+        name: Rylai-release-assets
+        path: |
+          artifacts/Rylai.dmg
+          artifacts/Rylai.zip
+          artifacts/SHA256SUMS.txt
+        retention-days: 30
+
+    - name: Publish GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        TAG_NAME="${GITHUB_REF_NAME:-${GITHUB_REF#refs/tags/}}"
+
+        if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+          gh release upload "$TAG_NAME" \
+            "$DMG_PATH" \
+            "$ZIP_PATH" \
+            "$CHECKSUM_PATH" \
+            --clobber
+        else
+          gh release create "$TAG_NAME" \
+            "$DMG_PATH" \
+            "$ZIP_PATH" \
+            "$CHECKSUM_PATH" \
+            --generate-notes \
+            --title "$TAG_NAME"
+        fi

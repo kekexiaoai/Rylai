@@ -72,4 +72,4 @@ jobs:
         find "$DERIVED_DATA_PATH" -maxdepth 5 \( -name "*.app" -o -name "*.xcresult" \) 2>/dev/null || echo "No build outputs found"
         test -d "$APP_PATH"
         lipo -info "$APP_BINARY_PATH"
-        lipo -verify_arch x86_64 arm64 "$APP_BINARY_PATH"
+        lipo "$APP_BINARY_PATH" -verify_arch x86_64 arm64
