@@ -19,6 +19,8 @@ jobs:
     env:
       DERIVED_DATA_PATH: build/DerivedData
       APP_PATH: build/DerivedData/Build/Products/Release/Rylai.app
+      APP_BINARY_PATH: build/DerivedData/Build/Products/Release/Rylai.app/Contents/MacOS/Rylai
+      LOGIN_ITEM_BINARY_PATH: build/DerivedData/Build/Products/Release/Rylai.app/Contents/Library/LoginItems/RylaiLoginItem.app/Contents/MacOS/RylaiLoginItem
       DMG_PATH: artifacts/Rylai.dmg
 
     steps:
@@ -56,7 +58,9 @@ jobs:
                    -scheme Rylai \
                    -configuration Release \
                    -derivedDataPath "$DERIVED_DATA_PATH" \
-                   -destination 'platform=macOS' \
+                   -destination 'generic/platform=macOS' \
+                   ONLY_ACTIVE_ARCH=NO \
+                   ARCHS="x86_64 arm64" \
                    CODE_SIGN_IDENTITY="" \
                    CODE_SIGNING_REQUIRED=NO \
                    CODE_SIGNING_ALLOWED=NO \
@@ -94,6 +98,12 @@ jobs:
           echo "ERROR: DMG not found"
           exit 1
         fi
+
+        echo "Main app architectures:"
+        lipo -info "$APP_BINARY_PATH"
+
+        echo "Login item architectures:"
+        lipo -info "$LOGIN_ITEM_BINARY_PATH"
 
     - name: Upload build artifacts
       if: success()
