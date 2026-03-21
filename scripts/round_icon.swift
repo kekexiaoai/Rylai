@@ -6,8 +6,8 @@ import ImageIO
 import UniformTypeIdentifiers
 
 // macOS app icon corner radius ratio (approximately 22.37% for 1024x1024)
-// For macOS Big Sur and later, the corner radius follows a specific formula
-func addRoundedCorners(to imagePath: String, outputPath: String, size: Int, cornerRadius: CGFloat) {
+// Icon content should be scaled to ~85% to leave proper padding
+func addRoundedCorners(to imagePath: String, outputPath: String, size: Int, cornerRadius: CGFloat, contentScale: CGFloat = 0.85) {
     guard let imageSource = CGImageSourceCreateWithURL(URL(fileURLWithPath: imagePath) as CFURL, nil),
           let image = CGImageSourceCreateImageAtIndex(imageSource, 0, nil) else {
         print("Failed to load image: \(imagePath)")
@@ -31,6 +31,9 @@ func addRoundedCorners(to imagePath: String, outputPath: String, size: Int, corn
         return
     }
 
+    // Clear background (transparent)
+    context.clear(CGRect(x: 0, y: 0, width: width, height: height))
+
     // Create rounded rect path
     let rect = CGRect(x: 0, y: 0, width: width, height: height)
     let path = CGPath(
@@ -44,8 +47,13 @@ func addRoundedCorners(to imagePath: String, outputPath: String, size: Int, corn
     context.addPath(path)
     context.clip()
 
-    // Draw image scaled to fit
-    context.draw(image, in: rect)
+    // Calculate scaled content rect (85% of size, centered)
+    let contentSize = width * contentScale
+    let contentOffset = (width - contentSize) / 2
+    let contentRect = CGRect(x: contentOffset, y: contentOffset, width: contentSize, height: contentSize)
+
+    // Draw image scaled to fit within padding
+    context.draw(image, in: contentRect)
 
     guard let roundedImage = context.makeImage() else {
         print("Failed to create rounded image")
@@ -79,9 +87,11 @@ let iconSizes: [(size: Int, cornerRadius: CGFloat)] = [
 
 let currentDir = FileManager.default.currentDirectoryPath
 let appIconsetPath = "\(currentDir)/Rylai/Resources/Assets.xcassets/AppIcon.appiconset"
-let sourceIcon = "\(appIconsetPath)/icon_512x512@2x.png"
 
-print("Adding rounded corners to app icons...")
+// Always use the original square icon as source
+let sourceIcon = "\(appIconsetPath)/icon_original.png"
+
+print("Adding rounded corners to app icons with 15% padding...")
 print("Source: \(sourceIcon)")
 print("")
 
@@ -91,4 +101,4 @@ for (size, cornerRadius) in iconSizes {
 }
 
 print("")
-print("Done! Icons created with rounded corners.")
+print("Done! Icons created with rounded corners and proper padding.")
